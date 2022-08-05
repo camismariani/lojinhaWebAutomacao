@@ -2,7 +2,6 @@ package modulos.produtos;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import org.junit.jupiter.api.*;
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import paginas.LoginPage;
@@ -14,10 +13,6 @@ public class ProdutosTest {
 
     private WebDriver navegador;
     Dotenv dotenv = Dotenv.load();
-
-
-
-
 
     @BeforeEach
     public void beforeEach(){
@@ -39,27 +34,38 @@ public class ProdutosTest {
     public void testNaoEPermitidoRegistrarProdutoComValorIgualAZero(){
 
         //logar na lojinha
-        new LoginPage(navegador)
-                .informarOUsuario(dotenv.get("usuario"))
-                .informarASenha(dotenv.get("senha"))
-                .submeterFormularioDeLogin();
+       String mensagemApresentada= new LoginPage(navegador)
+                .informarOUsuario(dotenv.get("env_usuario"))
+                .informarASenha(dotenv.get("env_senha"))
+                .submeterFormularioDeLogin()
+                .acessarFormularioAdicaoNovoProduto()
+                .informarNomeDoProduto("Bolacha")
+                .informarValorDoProduto("000")
+                .informarCoresDoProduto("preto,branco")
+                .submeterFormularioDeAdicaoComErro()
+                .capturarMensagemApresentada();
 
-        //abrir tela de produto
-        navegador.findElement(By.linkText("ADICIONAR PRODUTO")).click();
+        Assertions.assertEquals("O valor do produto deve estar entre R$ 0,01 e R$ 7.000,00",mensagemApresentada);
 
-        //preencher dados do produto e o valor sera igual a zero
-        navegador.findElement(By.id("produtonome")).sendKeys("Bolacha");
-        navegador.findElement(By.id("produtovalor")).sendKeys("650");
-        navegador.findElement(By.id("produtocores")).sendKeys("Marron, Amarelo");
+    }
 
-        //salvar o produto cadastrado
-        navegador.findElement(By.cssSelector("button[type='submit']")).click();
+    @Test
+    @DisplayName("Posso adicionar produtos que estejam na faixa de 0,01 a 7.000,00")
+    public void testPossoAdicionarProdutosComValorDeUmCentavoASeteMilReais(){
 
-        //validar a msg de erro foi apresentada
-        String mensagemToast = navegador.findElement(By.cssSelector(".toast.rounded")).getText();
+        //logar na lojinha
+        String mensagemApresentada= new LoginPage(navegador)
+                .informarOUsuario(dotenv.get("env_usuario"))
+                .informarASenha(dotenv.get("env_senha"))
+                .submeterFormularioDeLogin()
+                .acessarFormularioAdicaoNovoProduto()
+                .informarNomeDoProduto("Bolacha")
+                .informarValorDoProduto("5000")
+                .informarCoresDoProduto("preto,branco")
+                .submeterFormularioDeAdicaoComSucesso()
+                .capturarMensagemApresentada();
 
-        Assertions.assertEquals("O valor do produto deve estar entre R$ 0,01 e R$ 7.000,00",mensagemToast);
-
+        Assertions.assertEquals("Produto adicionado com sucesso",mensagemApresentada);
 
     }
 
